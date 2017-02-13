@@ -1,6 +1,7 @@
 Uuid: 49e9917c721e4abfa4c2540b07f35eb7
 ExtensionType: 2
 Name: WebSphere Portlet State Decoder
+RepoName: websphere-portlet-state-decoder
 ScreenVersion: 1.0
 SerialVersion: 1
 MinPlatformVersion: 0

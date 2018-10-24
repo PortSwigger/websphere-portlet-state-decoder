@@ -6,6 +6,7 @@ from burp import IMessageEditorTab
 import xml.dom.minidom
 import urllib2
 import urllib
+import ssl
 
 
 class BurpExtender(IBurpExtender, IMessageEditorTabFactory):
@@ -67,14 +68,19 @@ class WebSphereXMLStateTab(IMessageEditorTab):
 				cookie = [h for h in reqInfo.getHeaders() if h.startswith('Cookie:')]				
 				if '!ut' in path:
 					if 'https' in url.getProtocol() :
-						req = '%s://%s/wps/contenthandler?uri=state:%s' % (url.getProtocol(), url.getHost(), urllib.quote(url.toString()))					
+						req = '%s://%s/wps/contenthandler?uri=state:%s' % (url.getProtocol(), url.getHost(), urllib.quote(url.toString()))
+#						Ignore certificate errors					
+						ctx = ssl.create_default_context()
+						ctx.check_hostname = False
+						ctx.verify_mode = ssl.CERT_NONE
+						opener = urllib2.build_opener(urllib2.HTTPSHandler(context=ctx))
 					else :
 						req = '%s://%s:%d/wps/contenthandler?uri=state:%s' % (url.getProtocol(), url.getHost(), url.getPort(), urllib.quote(url.toString()))
-										
-					opener = urllib2.build_opener()
+						opener = urllib2.build_opener()
+
 					if cookie:
 						opener.addheaders.append(('Cookie', cookie[0].split(': ')[1]))
-					print("Making Web Request")
+					print("Making Web Request: %s" % req)
 					response = opener.open(req)
 					content = response.read()
 					content = xml.dom.minidom.parseString(content).toprettyxml()
@@ -84,8 +90,9 @@ class WebSphereXMLStateTab(IMessageEditorTab):
 					else:
 						self._currentMessage = ""
 		except Exception, e:
-			print(e.__doc__)
-			print(e.message)
+			print("Exception! %s - %s" % (e.__class__, e.__doc__))
+			print("Message: %s" % e.message)
+			print("Reason: %s" % e.reason)
 		return
 
 	def getMessage(self):
